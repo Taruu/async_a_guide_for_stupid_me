@@ -1,6 +1,18 @@
 import time
 import asyncio
 
+class AsyncIterator:
+    def __init__(self, seq):
+        self.iter = iter(seq)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            return next(self.iter)
+        except StopIteration:
+            raise StopAsyncIteration
 
 def sync_sleep(sleep: float):
     time.sleep(sleep)
@@ -9,7 +21,7 @@ def sync_sleep(sleep: float):
 
 async def async_to_sync_driver():
     loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(None, sync_sleep, (3))  # Making futures and banging on hold
+    result = await loop.run_in_executor(None, sync_sleep, (10))  # Making futures and banging on hold
     return result
 
 
@@ -27,15 +39,15 @@ async def main():
             new_task = loop.create_task(async_to_sync_driver())
             sync_list_task.append(new_task)
         else:
-            for task in sync_list_task:
+            async for task in AsyncIterator(sync_list_task):
                 if task.done():
                     print("sync_done!", task.result())
                     sync_list_task.remove(task)
         while len(async_list_task) < 10:
-            new_task = loop.create_task(async_sleep(2))
+            new_task = loop.create_task(async_sleep(5))
             async_list_task.append(new_task)
         else:
-            for task in async_list_task:
+            async for task in AsyncIterator(async_list_task):
                 if task.done():
                     print("async_done!", task.result())
                     async_list_task.remove(task)
