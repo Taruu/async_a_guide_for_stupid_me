@@ -9,7 +9,7 @@ def sync_sleep(sleep: float):
 
 async def async_to_sync_driver():
     loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(None, sync_sleep, (3))
+    result = await loop.run_in_executor(None, sync_sleep, (3))  # Making futures and banging on hold
     return result
 
 
@@ -18,13 +18,12 @@ async def async_sleep(sleep: float):
     return f"async_task_result {time.time()}"
 
 
-async def main(sleep: float):
+async def main():
     sync_list_task = []
     async_list_task = []
     loop = asyncio.get_running_loop()
     while True:
         while len(sync_list_task) < 10:
-            # print(time.ctime(), "async len task", len(sync_list_task))
             new_task = loop.create_task(async_to_sync_driver())
             sync_list_task.append(new_task)
         else:
@@ -40,7 +39,8 @@ async def main(sleep: float):
                 if task.done():
                     print("async_done!", task.result())
                     async_list_task.remove(task)
+        # If we do not sleep in while then we will steal the entire loop and it will be blocked
         await asyncio.sleep(1)
 
 
-asyncio.run(main(0.1))
+asyncio.run(main())
