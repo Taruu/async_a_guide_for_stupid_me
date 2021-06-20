@@ -5,8 +5,8 @@ from time import perf_counter
 urls = ['https://readmanga.live/sitemap.xml',
         'http://api.nekos.fun:8080/api/neko',
         'https://randomfox.ca/',
-        'https://readmanga.live/sitemap.xml'
-        ]
+        'https://readmanga.live/sitemap.xml',
+        ] * 10
 
 cache = {}
 
@@ -15,6 +15,7 @@ coro_lock = asyncio.Lock()
 
 async def cache_get(url):
     global cache
+    print(url)
     if url in cache:
         return cache.get(url)
     async with coro_lock:
@@ -27,8 +28,8 @@ async def cache_get(url):
 
 async def main():
     time_start = perf_counter()
-    list_coro = [cache_get(url) for url in urls]
-    await asyncio.gather(*list_coro)
+    for url in urls:
+        await cache_get(url)
     exec_time = perf_counter() - time_start
     print(f"Execution time: {exec_time} seconds")
 
