@@ -24,7 +24,6 @@ async def cache_get(url):
             result = await session.get(url)
             content = await result.text()
             cache[url] = content
-            coro_lock.release()
             return content
 
 
