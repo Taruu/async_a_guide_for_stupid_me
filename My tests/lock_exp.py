@@ -19,14 +19,13 @@ async def cache_get(url):
         if url in cache:
             print(f"get from cache {url}")
             return cache.get(url)
-        else:
-            print(f"get from internet {url}")
-            async with aiohttp.ClientSession() as session:
-                result = await session.get(url)
-                content = await result.text()
-                cache[url] = content
-                coro_lock.release()
-                return content
+        print(f"get from internet {url}")
+        async with aiohttp.ClientSession() as session:
+            result = await session.get(url)
+            content = await result.text()
+            cache[url] = content
+            coro_lock.release()
+            return content
 
 
 async def main():
