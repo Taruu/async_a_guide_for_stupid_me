@@ -15,21 +15,27 @@ coro_lock = asyncio.Lock()
 
 async def cache_get(url):
     global cache
-    print(url)
+
+    while coro_lock.locked():
+        await asyncio.sleep(0)
     if url in cache:
+        print(f"get from cache {url}")
         return cache.get(url)
-    async with coro_lock:
-        async with aiohttp.ClientSession() as session:
-            result = await session.get(url)
-            content = await result.text()
-            cache[url] = content
-            return content
+    else:
+        await coro_lock.acquire()
+        print(f"get from internet {url}")
+    async with aiohttp.ClientSession() as session:
+        result = await session.get(url)
+        content = await result.text()
+        cache[url] = content
+        coro_lock.release()
+        return content
 
 
 async def main():
     time_start = perf_counter()
-    for url in urls:
-        await cache_get(url)
+    list_coros = [cache_get(url) for url in urls]
+    await asyncio.gather(*list_coros)
     exec_time = perf_counter() - time_start
     print(f"Execution time: {exec_time} seconds")
 
